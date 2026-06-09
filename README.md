@@ -36,11 +36,14 @@ Il progetto non necessita di server backend proxy. Funziona al 100% lato client 
    ```bash
    npm install
    ```
-4. Per compilare l'estensione (genera la cartella `dist` da caricare su Chrome):
+4. **Configura il file manifest:**
+   - Copia il file `public/manifest.example.json` in `public/manifest.json`.
+   - Apri `public/manifest.json` e sostituisci `"INSERISCI_QUI_IL_TUO_CLIENT_ID"` con il tuo vero `client_id` OAuth 2.0.
+5. Per compilare l'estensione (genera la cartella `dist` da caricare su Chrome):
    ```bash
    npm run build
    ```
-5. Carica l'estensione su Chrome:
+6. Carica l'estensione su Chrome:
    - Apri `chrome://extensions/`
    - Abilita la **Modalità Sviluppatore** in alto a destra.
    - Clicca su **Carica estensione non pacchettizzata** e seleziona la cartella `dist` che si è creata nel progetto.
@@ -51,7 +54,8 @@ Per fare in modo che il widget di Google Tasks funzioni, è **necessario** confi
 Segui la guida completa nel file [GOOGLE_TASKS_SETUP.md](./GOOGLE_TASKS_SETUP.md) incluso in questa cartella.
 
 ## Sicurezza
-Il codice non contiene credenziali sensibili come `client_secret` in quanto il flusso OAuth delle estensioni Chrome utilizza unicamente il `client_id` (che è un dato pubblico inserito in `manifest.json`). Nessun `.env` viene caricato sulla repository.
+Il file `public/manifest.json` è stato inserito nel `.gitignore` e non viene tracciato per impedire il caricamento accidentale del tuo vero `client_id` su GitHub. Per distribuire o installare l'estensione usa `public/manifest.example.json` come base di partenza.
+Il codice non necessita di file `.env` poiché il flusso OAuth delle estensioni Chrome si basa esclusivamente sul `client_id` (pubblico) integrato nel manifest. Non esistono `client_secret` esposti in questa architettura.
 
 ## Licenza
 MIT License
