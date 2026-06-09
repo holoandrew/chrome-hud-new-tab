@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chrome HUD New Tab</title>
+  </head>
+  <body class="min-h-screen w-full relative overflow-x-hidden md:overflow-hidden bg-cover bg-center bg-no-repeat font-sans flex flex-col p-4 md:p-0 gap-6 md:block">
+    
+    <!-- Dark overlay for better readability -->
+    <div class="fixed inset-0 bg-[#050b14]/60 -z-20 pointer-events-none"></div>
+
+    <!-- Settings Button (Fixed at top left of Center column) -->
+    <div class="fixed top-4 right-4 xl:top-6 xl:right-auto xl:left-[420px] z-50">
+      <button id="settings-btn" class="w-10 h-10 bg-[#050b14]/80 border border-cyan-500/50 rounded-full flex items-center justify-center text-cyan-500 hover:text-cyan-300 hover:scale-110 hover:shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all group" title="Impostazioni">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:rotate-90 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+    </div>
+
+    <!-- MAIN WRAPPER -->
+    <div id="ui-layer" class="relative z-10 w-full h-full min-h-screen flex flex-col xl:flex-row xl:justify-between items-stretch gap-6 xl:gap-8 pb-24 transition-all duration-500">
+      
+      <!-- LEFT COLUMN: News -->
+      <div class="contents xl:flex w-full xl:w-[320px] shrink-0 flex-col xl:order-1">
+        <div id="news-widget" class="order-3 xl:order-none glass-panel w-full flex flex-col h-[400px] xl:h-full overflow-hidden">
+          <div id="news-header" class="px-4 py-3 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center cursor-pointer group">
+            <h2 id="news-header-title" class="tech-text text-[10px] text-cyan-50">NEWS_ONLINE <span class="text-cyan-700">//</span> CARICAMENTO...</h2>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <svg id="news-toggle-icon" class="w-4 h-4 text-cyan-500 group-hover:text-cyan-300 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+          <div id="news-container" class="flex-1 flex flex-col gap-3 p-4 overflow-y-auto custom-scrollbar">
+            <div class="animate-pulse w-full h-16 bg-cyan-900/50 rounded"></div>
+            <div class="animate-pulse w-full h-16 bg-cyan-900/50 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER COLUMN: Greeting, Time, Shortcuts -->
+      <main class="contents xl:flex flex-1 w-full flex-col items-center justify-start xl:justify-center gap-8 xl:order-2 self-center mt-12 xl:mt-0 px-0 xl:px-4 max-w-full xl:max-w-4xl 2xl:max-w-5xl">
+        
+        <div class="order-1 xl:order-none flex flex-col items-center gap-4 xl:gap-8 w-full mt-12 xl:mt-0">
+          <!-- Greeting -->
+          <div class="flex flex-col items-center text-center">
+            <div class="tech-text animate-pulse mb-2 text-cyan-500 text-xs">SYSTEM_ONLINE</div>
+            <div id="greeting-display" class="text-4xl md:text-5xl lg:text-6xl font-bold text-cyan-50 tracking-tight drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]">Ciao Utente!</div>
+          </div>
+
+          <!-- Time Widget -->
+          <div class="text-center">
+            <h1 id="time-display" class="text-6xl md:text-8xl lg:text-[140px] font-bold tracking-tighter drop-shadow-lg font-mono text-cyan-50 leading-none">--:--</h1>
+            <p id="date-display" class="text-sm md:text-base lg:text-xl text-cyan-400 mt-2 md:mt-4 font-medium tracking-wide"></p>
+          </div>
+        </div>
+
+        <!-- Shortcuts Widget -->
+        <div class="order-4 xl:order-none w-[95%] xl:w-full max-w-4xl mx-auto glass-panel p-4 md:p-6 relative mt-4">
+          <!-- Edit Mode Toggle -->
+          <div class="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-3 z-20">
+            <span class="tech-text text-[10px] hidden sm:block text-cyan-50">EDIT_MODE</span>
+            <label class="relative cursor-pointer block">
+              <input type="checkbox" id="edit-mode-toggle" class="sr-only peer">
+              <div class="w-8 h-4 bg-[#0a1120] border border-cyan-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-cyan-500 after:border-cyan-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-700"></div>
+            </label>
+          </div>
+
+          <div id="shortcuts-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-x-2 gap-y-4 justify-items-center w-full mt-14 md:mt-12">
+            <!-- Shortcuts will be injected here -->
+          </div>
+        </div>
+
+        <!-- Quote Widget -->
+        <div id="quote-widget" class="order-5 xl:order-none glass-panel w-[95%] xl:w-full max-w-4xl mx-auto flex flex-col pointer-events-auto mt-auto mb-4 xl:mb-0">
+          <div class="px-4 py-2 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center group">
+            <h2 class="tech-text text-[10px] text-cyan-50">AFORISMA_GIORNO <span class="text-cyan-700">//</span> ONLINE</h2>
+            <button id="quote-refresh-btn" class="text-cyan-600 hover:text-cyan-300 transition-colors" title="Cambia aforisma">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            </button>
+          </div>
+          <div class="px-4 md:px-8 py-4 flex flex-col items-center justify-center">
+            <blockquote id="quote-text" class="text-base md:text-lg lg:text-xl font-medium text-cyan-50 italic w-full text-center leading-relaxed">"Caricamento..."</blockquote>
+            <p id="quote-author" class="text-[10px] md:text-xs text-cyan-500 mt-2 font-mono"></p>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT COLUMN: Apps, Weather, Tasks -->
+      <div class="contents xl:flex w-full xl:w-[320px] shrink-0 flex-col items-center xl:items-end gap-4 xl:order-3">
+        
+        <!-- Google Apps -->
+        <div class="order-2 xl:order-none glass-panel w-full md:w-[320px] flex flex-col self-center xl:self-end">
+          <div class="px-4 py-2 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center">
+            <h2 class="tech-text text-[10px] text-cyan-50">G_SERVICES <span class="text-cyan-700">//</span> MOST WANTED</h2>
+          </div>
+          <div class="grid grid-cols-4 gap-y-4 gap-x-2 py-4 justify-items-center">
+            <a href="https://mail.google.com" title="Gmail" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" class="w-6 h-6" alt="Gmail">
+            </a>
+            <a href="https://drive.google.com" title="Drive" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" class="w-6 h-6" alt="Drive">
+            </a>
+            <a href="https://calendar.google.com" title="Calendar" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" class="w-6 h-6" alt="Calendar">
+            </a>
+            <a href="https://maps.google.com" title="Maps" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg" class="w-6 h-6" alt="Maps">
+            </a>
+            <a href="https://translate.google.com" title="Translate" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Google_Translate_logo.svg" class="w-6 h-6" alt="Translate">
+            </a>
+            <a href="https://docs.google.com/document" title="Documenti" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg" class="w-6 h-6" alt="Docs">
+            </a>
+            <a href="https://docs.google.com/spreadsheets" title="Fogli" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" class="w-6 h-6" alt="Sheets">
+            </a>
+            <a href="https://gemini.google.com" title="Gemini" class="hover:scale-125 transition-transform drop-shadow-md">
+              <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" class="w-6 h-6" alt="Gemini">
+            </a>
+          </div>
+        </div>
+
+        <!-- Weather -->
+        <div id="weather-widget-container" class="order-6 xl:order-none glass-panel w-full md:w-[320px] flex flex-col overflow-hidden self-center xl:self-end">
+          <div class="px-4 py-2 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center">
+            <h2 class="tech-text text-[10px] text-cyan-50">METEO <span class="text-cyan-700">//</span> ONLINE</h2>
+          </div>
+          <div id="weather-widget" class="px-5 py-3 flex flex-col items-end gap-2">
+            <div class="animate-pulse w-full h-16 bg-cyan-900/50 rounded"></div>
+          </div>
+        </div>
+
+        <!-- Google Tasks -->
+        <div id="tasks-widget" class="order-7 xl:order-none glass-panel w-full md:w-[320px] flex flex-col overflow-hidden max-h-[400px] self-center xl:self-end">
+          <div id="tasks-header" class="px-4 py-3 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center cursor-pointer group">
+            <div class="flex gap-2 items-center text-[9px] sm:text-[10px]">
+              <h2 class="tech-text text-[10px] text-cyan-50 mr-1">G_TASKS</h2>
+              <span class="text-cyan-700">//</span>
+              <button id="tab-active" class="tech-text text-cyan-300 hover:text-cyan-100 transition-colors">ATTIVI</button>
+              <span class="text-cyan-700">//</span>
+              <button id="tab-completed" class="tech-text text-cyan-700 hover:text-cyan-400 transition-colors">COMPLETATI</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="tasks-status-indicator" class="w-2 h-2 rounded-full bg-cyan-700"></span>
+              <svg id="tasks-toggle-icon" class="w-4 h-4 text-cyan-500 group-hover:text-cyan-300 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+          
+          <div id="tasks-auth-container" class="p-4 flex flex-col items-center justify-center gap-3">
+            <p class="text-xs text-cyan-500 text-center font-mono">Autenticazione richiesta per sincronizzazione DB.</p>
+            <button id="tasks-login-btn" class="px-4 py-1.5 tech-text bg-cyan-900/50 border border-cyan-500 hover:bg-cyan-600/50 hover:shadow-[0_0_15px_rgba(6,182,212,0.6)] rounded text-cyan-100 transition text-[10px]">AUTH_REQ</button>
+          </div>
+
+          <div id="tasks-main-container" class="hidden flex-col h-full overflow-hidden">
+            <div id="tasks-list" class="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-2 min-h-[150px]">
+              <!-- Tasks injected here -->
+            </div>
+            <div class="p-3 border-t border-cyan-500/20 bg-[#050b14]/60 shrink-0">
+              <form id="tasks-add-form" class="flex gap-2 items-center relative">
+                <input type="text" id="tasks-add-input" placeholder="Aggiungi task..." class="flex-1 bg-transparent border-b border-cyan-500/50 text-cyan-50 text-xs focus:outline-none focus:border-cyan-300 placeholder-cyan-700 py-1 pr-6" required>
+                
+                <button type="button" id="tasks-mic-btn" class="absolute right-8 text-cyan-700 hover:text-cyan-400 transition-colors" title="Dettatura vocale">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                </button>
+
+                <button type="submit" class="text-cyan-500 hover:text-cyan-300 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spotify Widget -->
+        <div id="spotify-widget-container" class="order-8 xl:order-none glass-panel w-full md:w-[320px] overflow-hidden p-1 self-center xl:self-end">
+          <iframe style="border-radius:8px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal Add/Edit Shortcut -->
+    <dialog id="shortcut-modal" class="p-6 m-auto bg-[#050b14] text-cyan-50 rounded-2xl backdrop:bg-black/80 shadow-[0_0_30px_rgba(6,182,212,0.3)] border border-cyan-500/50 w-[90%] md:w-80">
+      <h3 id="shortcut-modal-title" class="tech-text mb-4 text-cyan-300 border-b border-cyan-500/30 pb-2">NUOVA_SCORCIATOIA</h3>
+      <input type="hidden" id="shortcut-id">
+      <input type="text" id="shortcut-name" placeholder="Nome (es. Netflix)" class="w-full mb-3 p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100">
+      <input type="url" id="shortcut-url" placeholder="URL (es. https://netflix.com)" class="w-full mb-4 p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100">
+      <div class="flex justify-end gap-2">
+        <button id="close-modal" class="px-3 py-1.5 tech-text text-cyan-600 hover:text-cyan-400 transition">ANNULLA</button>
+        <button id="save-modal" class="px-4 py-1.5 tech-text bg-cyan-900/50 border border-cyan-500 hover:bg-cyan-600/50 hover:shadow-[0_0_15px_rgba(6,182,212,0.6)] rounded text-cyan-100 transition">SALVA</button>
+      </div>
+    </dialog>
+
+    <!-- Modal Settings -->
+    <dialog id="settings-modal" class="p-6 m-auto bg-[#050b14] text-cyan-50 rounded-2xl backdrop:bg-black/80 shadow-[0_0_30px_rgba(6,182,212,0.3)] border border-cyan-500/50 w-[90%] md:w-96">
+      <h3 class="tech-text mb-4 text-cyan-300 border-b border-cyan-500/30 pb-2">IMPOSTAZIONI_SISTEMA</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <p class="text-xs text-cyan-500 mb-1 font-mono">Nome Utente:</p>
+          <input type="text" id="user-name-input" placeholder="Es. Andrea" class="w-full p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100">
+        </div>
+        
+        <div>
+          <p class="text-xs text-cyan-500 mb-1 font-mono">Categoria News:</p>
+          <select id="news-topic-input" class="w-full p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100 tech-text">
+            <option value="finanza">FINANZA</option>
+            <option value="tecnologia">TECNOLOGIA</option>
+            <option value="italia">ITALIA</option>
+            <option value="mondo">MONDO</option>
+            <option value="sport24">SPORT</option>
+          </select>
+        </div>
+
+        <div>
+          <p class="text-xs text-cyan-500 mb-1 font-mono">Tema HUD:</p>
+          <select id="theme-input" class="w-full p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100 tech-text">
+            <option value="theme-dark">DARK (CIANO)</option>
+            <option value="theme-dev">DEV (VIOLA)</option>
+            <option value="theme-light">LIGHT (GHIACCIO)</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col justify-center">
+          <p class="text-xs text-cyan-500 mb-2 font-mono">Widget Spotify:</p>
+          <label class="relative cursor-pointer flex items-center gap-3">
+            <input type="checkbox" id="spotify-toggle-input" class="sr-only peer" checked>
+            <div class="w-8 h-4 bg-[#0a1120] border border-cyan-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-cyan-500 after:border-cyan-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-700"></div>
+            <span class="tech-text text-cyan-100" id="spotify-toggle-label">ABILITATO</span>
+          </label>
+        </div>
+
+        <div class="flex flex-col justify-center mt-2">
+          <p class="text-xs text-cyan-500 mb-2 font-mono">Widget News:</p>
+          <label class="relative cursor-pointer flex items-center gap-3">
+            <input type="checkbox" id="news-toggle-input" class="sr-only peer" checked>
+            <div class="w-8 h-4 bg-[#0a1120] border border-cyan-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-cyan-500 after:border-cyan-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-700"></div>
+            <span class="tech-text text-cyan-100" id="news-toggle-label">ABILITATO</span>
+          </label>
+        </div>
+
+        <div class="flex flex-col justify-center mt-2">
+          <p class="text-xs text-cyan-500 mb-2 font-mono">Widget Aforismi:</p>
+          <label class="relative cursor-pointer flex items-center gap-3">
+            <input type="checkbox" id="quote-toggle-input" class="sr-only peer" checked>
+            <div class="w-8 h-4 bg-[#0a1120] border border-cyan-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-cyan-500 after:border-cyan-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-700"></div>
+            <span class="tech-text text-cyan-100" id="quote-toggle-label">ABILITATO</span>
+          </label>
+        </div>
+
+        <div class="flex flex-col justify-center mt-2">
+          <p class="text-xs text-cyan-500 mb-2 font-mono">Widget Meteo:</p>
+          <label class="relative cursor-pointer flex items-center gap-3">
+            <input type="checkbox" id="weather-toggle-input" class="sr-only peer" checked>
+            <div class="w-8 h-4 bg-[#0a1120] border border-cyan-500/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-cyan-500 after:border-cyan-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-cyan-700"></div>
+            <span class="tech-text text-cyan-100" id="weather-toggle-label">ABILITATO</span>
+          </label>
+        </div>
+      </div>
+
+      <p class="text-xs text-cyan-500 mb-1 font-mono">Immagine Sfondo Globale (carica un file):</p>
+      <input type="file" id="bg-file-input" accept="image/*" class="w-full mb-2 p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100">
+      <button id="reset-bg-btn" class="text-xs text-cyan-600 hover:text-cyan-400 mb-6 underline tech-text">RIPRISTINA SFONDO DEFAULT</button>
+      
+      <div class="flex justify-end gap-2">
+        <button id="close-settings-modal" class="px-3 py-1.5 tech-text text-cyan-600 hover:text-cyan-400 transition">ANNULLA</button>
+        <button id="save-settings-modal" class="px-4 py-1.5 tech-text bg-cyan-900/50 border border-cyan-500 hover:bg-cyan-600/50 hover:shadow-[0_0_15px_rgba(6,182,212,0.6)] rounded text-cyan-100 transition">APPLICA</button>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#050b14] text-cyan-50 antialiased overflow-hidden selection:bg-cyan-500 selection:text-white bg-cover bg-center bg-no-repeat;
+    /* Un fallback in caso non ci sia l'immagine */
+    background-image: radial-gradient(circle at top right, rgba(6, 182, 212, 0.15), transparent 50%),
+                      radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.1), transparent 50%);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-[#050b14]/50 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.15)];
+  }
+  .tech-text {
+    @apply text-cyan-400 font-mono tracking-widest uppercase text-xs;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.custom-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#shortcuts-grid .edit-sc,
+#shortcuts-grid .delete-sc,
+#shortcuts-grid .add-sc-btn {
+  display: none;
+}
+
+body.edit-mode-active #shortcuts-grid .edit-sc,
+body.edit-mode-active #shortcuts-grid .delete-sc {
+  display: flex !important;
+}
+body.edit-mode-active #shortcuts-grid .add-sc-btn {
+  display: flex !important;
+}
+
+/* ----------------------------------
+   SISTEMA DEI TEMI (Filtri CSS)
+----------------------------------- */
+body.theme-dev #ui-layer,
+body.theme-dev dialog {
+  filter: hue-rotate(75deg);
+}
+/* Evita di colorare le icone (Meteo, Google, ecc.) in modalità dev */
+body.theme-dev img,
+body.theme-dev iframe {
+  filter: hue-rotate(-75deg) !important;
+}
+
+/* --- TEMA LIGHT (Ice Traslucido) --- */
+body.theme-light #ui-layer,
+body.theme-light dialog {
+  filter: none !important;
+}
+body.theme-light iframe {
+  filter: none !important;
+}
+body.theme-light img {
+  /* Al posto di rimuovere l'ombra, mettiamo un'ombra scura per far risaltare icone bianche come GitHub sul fondo chiaro */
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)) !important;
+}
+body.theme-light img.invert {
+  /* Se l'immagine è nativamente nera (es. GitHub) ha la classe invert: dobbiamo preservare l'inversione per renderla bianca */
+  filter: invert(1) brightness(2) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Sfondi - Effetto ghiaccio semitrasparente */
+body.theme-light .bg-\[\#050b14\] { background-color: rgba(255,255,255,0.15) !important; }
+body.theme-light .bg-\[\#0a1120\] { background-color: rgba(255,255,255,0.2) !important; }
+body.theme-light .bg-\[\#0a1120\]\/30 { background-color: rgba(255,255,255,0.1) !important; }
+body.theme-light .bg-\[\#050b14\]\/40 { background-color: rgba(255,255,255,0.2) !important; }
+body.theme-light .hover\:bg-\[\#0a1120\]\/60:hover { background-color: rgba(255,255,255,0.3) !important; }
+
+/* Pannelli Glass - Frosty */
+body.theme-light .glass-panel {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 30px rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Override Bordi Ghiaccio */
+body.theme-light .border-cyan-500\/20,
+body.theme-light .border-cyan-500\/30 { border-color: rgba(255, 255, 255, 0.2) !important; }
+body.theme-light .border-cyan-400 { border-color: rgba(255, 255, 255, 0.5) !important; }
+body.theme-light .hover\:border-cyan-400:hover { border-color: rgba(255, 255, 255, 0.8) !important; }
+
+body.theme-light .border-l-2.border-cyan-500\/30 { border-color: rgba(255, 255, 255, 0.4) !important; }
