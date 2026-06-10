@@ -6,6 +6,7 @@ import { initQuote } from './widgets/quote.js';
 import { initNews } from './widgets/news.js';
 import { initSettings } from './widgets/settings.js';
 import { initTasks } from './widgets/tasks.js';
+import { initLayout } from './widgets/layout.js';
 
 const defaultBg = "bg-default.jpg";
 
@@ -17,4 +18,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initNews();
     initSettings();
     initTasks();
+    initLayout();
 });

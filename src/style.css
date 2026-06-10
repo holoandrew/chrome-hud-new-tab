@@ -53,11 +53,12 @@ body.theme-dev dialog {
 }
 /* Evita di colorare le icone (Meteo, Google, ecc.) in modalità dev */
 body.theme-dev img,
-body.theme-dev iframe {
+body.theme-dev iframe,
+body.theme-dev .no-hue {
   filter: hue-rotate(-75deg) !important;
 }
 
-/* --- TEMA LIGHT (Ice Traslucido) --- */
+/* --- TEMA LIGHT (Google White) --- */
 body.theme-light #ui-layer,
 body.theme-light dialog {
   filter: none !important;
@@ -65,33 +66,105 @@ body.theme-light dialog {
 body.theme-light iframe {
   filter: none !important;
 }
+
+body.theme-light .glass-panel,
+body.theme-light .bg-\[\#050b14\]\/80,
+body.theme-light .bg-\[\#050b14\] {
+  background-color: #ffffff !important;
+  border-color: #dadce0 !important;
+  color: #202124 !important;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15) !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-light .bg-\[\#0a1120\],
+body.theme-light .bg-\[\#0a1120\]\/50,
+body.theme-light .bg-\[\#0a1120\]\/60 {
+  background-color: #f1f3f4 !important;
+  border-color: #dadce0 !important;
+}
+
+body.theme-light .bg-\[\#050b14\]\/40 {
+  background-color: #f8f9fa !important;
+}
+
+body.theme-light .text-cyan-50,
+body.theme-light .text-cyan-100,
+body.theme-light .text-cyan-200,
+body.theme-light .text-cyan-300,
+body.theme-light .text-cyan-400,
+body.theme-light .text-cyan-500,
+body.theme-light .text-cyan-600 {
+  color: #202124 !important;
+}
+
+body.theme-light .tech-text {
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: normal !important;
+  color: #5f6368 !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+
+body.theme-light .border-cyan-500\/50,
+body.theme-light .border-cyan-500\/30,
+body.theme-light .border-cyan-500\/20,
+body.theme-light .border-cyan-500\/10 {
+  border-color: #dadce0 !important;
+}
+
+body.theme-light .drop-shadow-\[0_0_15px_rgba\(6\,182\,212\,0\.5\)\],
+body.theme-light .drop-shadow-\[0_0_8px_rgba\(6\,182\,212\,0\.8\)\],
+body.theme-light .drop-shadow-\[0_0_15px_rgba\(6\,182\,212\,0\.6\)\] {
+  filter: none !important;
+}
+
 body.theme-light img {
-  /* Al posto di rimuovere l'ombra, mettiamo un'ombra scura per far risaltare icone bianche come GitHub sul fondo chiaro */
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)) !important;
+  filter: none !important;
 }
 body.theme-light img.invert {
-  /* Se l'immagine è nativamente nera (es. GitHub) ha la classe invert: dobbiamo preservare l'inversione per renderla bianca */
-  filter: invert(1) brightness(2) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)) !important;
+  filter: invert(1) brightness(0.2) !important;
 }
 
-/* Sfondi - Effetto ghiaccio semitrasparente */
-body.theme-light .bg-\[\#050b14\] { background-color: rgba(255,255,255,0.15) !important; }
-body.theme-light .bg-\[\#0a1120\] { background-color: rgba(255,255,255,0.2) !important; }
-body.theme-light .bg-\[\#0a1120\]\/30 { background-color: rgba(255,255,255,0.1) !important; }
-body.theme-light .bg-\[\#050b14\]\/40 { background-color: rgba(255,255,255,0.2) !important; }
-body.theme-light .hover\:bg-\[\#0a1120\]\/60:hover { background-color: rgba(255,255,255,0.3) !important; }
-
-/* Pannelli Glass - Frosty */
-body.theme-light .glass-panel {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 4px 30px rgba(255, 255, 255, 0.05) !important;
+/* TEMA MINIMAL (Apex-like) */
+body.theme-minimal {
+  background-image: url('../public/bg-minimal.jpg'); /* Imposta un'immagine minimal in public, o colore a tinta unita */
+  background-color: #f8fafc;
 }
 
-/* Override Bordi Ghiaccio */
-body.theme-light .border-cyan-500\/20,
-body.theme-light .border-cyan-500\/30 { border-color: rgba(255, 255, 255, 0.2) !important; }
-body.theme-light .border-cyan-400 { border-color: rgba(255, 255, 255, 0.5) !important; }
-body.theme-light .hover\:border-cyan-400:hover { border-color: rgba(255, 255, 255, 0.8) !important; }
+body.theme-minimal .glass-panel,
+body.theme-minimal .bg-\[\#050b14\]\/80,
+body.theme-minimal .bg-\[\#050b14\] {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #1e293b !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: blur(12px) !important;
+}
 
-body.theme-light .border-l-2.border-cyan-500\/30 { border-color: rgba(255, 255, 255, 0.4) !important; }
+body.theme-minimal .bg-\[\#0a1120\],
+body.theme-minimal .bg-\[\#0a1120\]\/50,
+body.theme-minimal .bg-\[\#0a1120\]\/60 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-minimal .text-cyan-50,
+body.theme-minimal .text-cyan-100,
+body.theme-minimal .text-cyan-300,
+body.theme-minimal .text-cyan-400,
+body.theme-minimal .text-cyan-500 {
+  color: #334155 !important;
+}
+
+body.theme-minimal .border-cyan-500\/50,
+body.theme-minimal .border-cyan-500\/30 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-minimal .tech-text {
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: normal !important;
+  text-shadow: none !important;
+}
+
