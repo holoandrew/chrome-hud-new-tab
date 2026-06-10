@@ -54,7 +54,7 @@ const WidgetManager = () => {
   };
 
   return (
-    <div className="w-full flex flex-col xl:flex-row justify-between gap-6 xl:gap-8 px-0 xl:px-4 pt-20 md:pt-24 pb-6 md:p-8 md:pt-24 xl:p-12 xl:pt-24 relative z-10 transition-all duration-500 min-h-[80vh]">
+    <div className="w-full flex flex-col xl:flex-row justify-between gap-6 xl:gap-8 px-0 xl:px-4 pt-16 md:pt-16 pb-6 md:p-8 xl:p-12 xl:pt-16 relative z-10 transition-all duration-500 min-h-[80vh]">
       
       {/* LEFT COLUMN */}
       <div className={`w-full xl:w-[320px] flex-shrink-0 flex flex-col gap-4 transition-all duration-300 ${isEditMode && leftCol.length === 0 ? 'bg-cyan-900/10 border-2 border-dashed border-cyan-500/30 rounded-2xl p-4' : ''}`}>
@@ -89,7 +89,7 @@ const WidgetManager = () => {
       </div>
 
       {/* CENTER COLUMN (Fixed widgets like Time and Shortcuts) */}
-      <div className="flex-grow flex flex-col items-center justify-start gap-6 z-10 w-full xl:w-auto max-w-4xl 2xl:max-w-5xl mx-auto">
+      <div className="flex-grow flex flex-col items-center justify-start gap-4 z-10 w-full xl:w-auto max-w-4xl 2xl:max-w-5xl mx-auto">
         <TimeWidget />
         {settings.showGoogleServices && <GoogleServicesWidget />}
         {settings.showShortcuts && <ShortcutsWidget />}
