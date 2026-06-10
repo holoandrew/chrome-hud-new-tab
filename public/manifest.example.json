@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Chrome HUD New Tab",
-  "version": "1.0",
-  "description": "Una dashboard moderna e minimal per la tua nuova scheda.",
+  "version": "2.0",
+  "description": "Una dashboard moderna in React con widget Meteo, Task, News, Shortcuts e Temi personalizzati.",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
