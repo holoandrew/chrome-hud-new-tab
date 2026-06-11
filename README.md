@@ -24,7 +24,7 @@ Una dashboard moderna, minimalista ed elegante in stile "HUD" cibernetico per la
 ## Architettura e Tecnologie
 
 Il progetto non necessita di server backend proxy. Funziona al 100% lato client ed è impacchettato tramite Vite.
-- **HTML5 & Vanilla JavaScript**: Logica suddivisa in moduli (`src/widgets/*.js`).
+- **React 19 & TypeScript**: Logica strutturata a componenti funzionali (`src/components/*.tsx`), con gestione dello stato globale.
 - **Tailwind CSS**: Utility-first styling integrato tramite PostCSS e Vite.
 - **Google Identity API (`chrome.identity`)**: Autenticazione OAuth 2.0 sicura per l'accesso ai Tasks di Google, direttamente integrata nel manifest.
 
