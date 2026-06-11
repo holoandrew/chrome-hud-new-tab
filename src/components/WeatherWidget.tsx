@@ -17,6 +17,7 @@ const WeatherWidget = () => {
   const [icon, setIcon] = useState('🌡️');
   const [hourly, setHourly] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const getWeatherIcon = (code: number) => {
     if (code === 0) return '☀️';
@@ -29,79 +30,94 @@ const WeatherWidget = () => {
     return '🌡️';
   };
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      let lat = 41.8919;
-      let lon = 12.5113;
-      let cityName = 'Roma';
+  /** Fetch tramite background service worker (bypassa CORS) */
+  const swFetch = async (url: string): Promise<any> => {
+    const response: { ok: boolean; data?: string; error?: string } = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ action: 'FETCH_URL', url }, resolve);
+    });
+    if (!response?.ok || !response.data) {
+      throw new Error(response?.error || 'Fetch failed');
+    }
+    return JSON.parse(response.data);
+  };
 
-      try {
-        if (settings.weatherCity && settings.weatherCity.trim() !== '') {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(settings.weatherCity)}`);
-          const geoData = await geoRes.json();
-          if (geoData && geoData.length > 0) {
-            lat = parseFloat(geoData[0].lat);
-            lon = parseFloat(geoData[0].lon);
-            cityName = geoData[0].name;
-          }
-        } else {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          lat = position.coords.latitude;
-          lon = position.coords.longitude;
-          
-          const cityRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-          const cityData = await cityRes.json();
-          cityName = cityData.address.city || cityData.address.town || cityData.address.village || cityData.name || 'Sconosciuta';
+  const fetchWeather = async (retries = 2) => {
+    setLoading(true);
+    setError(false);
+    let lat = 41.8919;
+    let lon = 12.5113;
+    let cityName = 'Roma';
+
+    try {
+      if (settings.weatherCity && settings.weatherCity.trim() !== '') {
+        const geoData = await swFetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(settings.weatherCity)}`);
+        if (geoData && geoData.length > 0) {
+          lat = parseFloat(geoData[0].lat);
+          lon = parseFloat(geoData[0].lon);
+          cityName = geoData[0].name;
         }
-      } catch (e) {
-        // Fallback to Rome defaults
+      } else {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        lat = position.coords.latitude;
+        lon = position.coords.longitude;
+        
+        const cityData = await swFetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+        cityName = cityData.address?.city || cityData.address?.town || cityData.address?.village || cityData.name || 'Sconosciuta';
       }
+    } catch (e) {
+      // Fallback to Rome defaults
+    }
 
-      setCity(cityName);
+    setCity(cityName);
 
-      try {
-        const [wRes, aqiRes] = await Promise.all([
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m&daily=uv_index_max&hourly=temperature_2m,weathercode&timezone=auto`).catch(() => null),
-          fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi`).catch(() => null)
-        ]);
+    try {
+      const [wData, aqiData] = await Promise.all([
+        swFetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m&daily=uv_index_max&hourly=temperature_2m,weathercode&timezone=auto`),
+        swFetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi`).catch(() => null)
+      ]);
 
-        let wData = null;
-        let aqiData = null;
-        if (wRes) wData = await wRes.json();
-        if (aqiRes) aqiData = await aqiRes.json();
+      if (wData && wData.current) {
+        setTemp(Math.round(wData.current.temperature_2m).toString());
+        setIcon(getWeatherIcon(wData.current.weathercode));
+        setHumidity((wData.current.relative_humidity_2m || '--').toString());
+        setUv((wData.daily && wData.daily.uv_index_max ? wData.daily.uv_index_max[0] : '--').toString());
+        setAqi((aqiData && aqiData.current ? aqiData.current.european_aqi : '--').toString());
 
-        if (wData && wData.current) {
-          setTemp(Math.round(wData.current.temperature_2m).toString());
-          setIcon(getWeatherIcon(wData.current.weathercode));
-          setHumidity((wData.current.relative_humidity_2m || '--').toString());
-          setUv((wData.daily && wData.daily.uv_index_max ? wData.daily.uv_index_max[0] : '--').toString());
-          setAqi((aqiData && aqiData.current ? aqiData.current.european_aqi : '--').toString());
-
-          if (wData.hourly && wData.hourly.time) {
-            const currentHourIndex = wData.hourly.time.findIndex((t: string) => new Date(t) > new Date());
-            const hours = [];
-            for (let i = 0; i < 4; i++) {
-              const idx = Math.max(0, currentHourIndex + i);
-              if (idx < wData.hourly.time.length) {
-                hours.push({
-                  time: new Date(wData.hourly.time[idx]).getHours() + ':00',
-                  temp: Math.round(wData.hourly.temperature_2m[idx]),
-                  icon: getWeatherIcon(wData.hourly.weathercode[idx])
-                });
-              }
+        if (wData.hourly && wData.hourly.time) {
+          const currentHourIndex = wData.hourly.time.findIndex((t: string) => new Date(t) > new Date());
+          const hours = [];
+          for (let i = 0; i < 4; i++) {
+            const idx = Math.max(0, currentHourIndex + i);
+            if (idx < wData.hourly.time.length) {
+              hours.push({
+                time: new Date(wData.hourly.time[idx]).getHours() + ':00',
+                temp: Math.round(wData.hourly.temperature_2m[idx]),
+                icon: getWeatherIcon(wData.hourly.weathercode[idx])
+              });
             }
-            setHourly(hours);
           }
+          setHourly(hours);
         }
-      } catch (e) {
-        console.error('Weather fetch error:', e);
-      } finally {
-        setLoading(false);
+        setError(false);
+      } else {
+        throw new Error('Dati meteo non disponibili');
       }
-    };
+    } catch (e) {
+      if (retries > 0) {
+        console.warn(`Meteo: tentativo fallito, riprovo... (${retries} rimasti)`);
+        await new Promise((r) => setTimeout(r, 2000));
+        return fetchWeather(retries - 1);
+      }
+      console.error('Meteo: tutti i tentativi falliti', e);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchWeather();
   }, [settings.weatherCity]);
 
@@ -114,6 +130,16 @@ const WeatherWidget = () => {
       <div className="px-5 py-3 flex flex-col items-end gap-2 w-full">
         {loading ? (
           <div className="animate-pulse w-full h-16 bg-cyan-900/50 rounded"></div>
+        ) : error ? (
+          <div className="w-full flex flex-col items-center gap-3 py-4">
+            <span className="text-cyan-600 text-xs tech-text">CONNESSIONE_FALLITA</span>
+            <button
+              onClick={() => fetchWeather()}
+              className="px-4 py-1.5 text-[10px] tech-text text-cyan-300 border border-cyan-500/40 rounded hover:bg-cyan-900/40 hover:border-cyan-400 transition-all"
+            >
+              ↻ RIPROVA
+            </button>
+          </div>
         ) : (
           <div className="w-full flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-1">

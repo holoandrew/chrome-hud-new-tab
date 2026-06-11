@@ -31,7 +31,9 @@
   "host_permissions": [
     "https://api.open-meteo.com/*",
     "https://air-quality-api.open-meteo.com/*",
-    "https://api.rss2json.com/*",
+    "https://www.ilsole24ore.com/*",
+    "https://www.corrieredellosport.it/*",
+    "https://cdn.corrieredellosport.it/*",
     "https://api.fisenko.net/*",
     "https://*.google.com/*",
     "https://nominatim.openstreetmap.org/*",
