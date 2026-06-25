@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useGlobal } from '../GlobalContext';
 
 interface HourlyData {
@@ -17,6 +17,7 @@ const WeatherWidget = () => {
   const [icon, setIcon] = useState('🌡️');
   const [hourly, setHourly] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const getWeatherIcon = (code: number) => {
     if (code === 0) return '☀️';
@@ -30,6 +31,8 @@ const WeatherWidget = () => {
   };
 
   useEffect(() => {
+    const geoCacheKey = (q: string) => `weather_geo_${q.trim().toLowerCase()}`;
+
     const fetchWeather = async () => {
       let lat = 41.8919;
       let lon = 12.5113;
@@ -37,12 +40,20 @@ const WeatherWidget = () => {
 
       try {
         if (settings.weatherCity && settings.weatherCity.trim() !== '') {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(settings.weatherCity)}`);
-          const geoData = await geoRes.json();
-          if (geoData && geoData.length > 0) {
-            lat = parseFloat(geoData[0].lat);
-            lon = parseFloat(geoData[0].lon);
-            cityName = geoData[0].name;
+          // Geocoding cachato: Nominatim ha rate-limit ~1 req/s.
+          const cached = localStorage.getItem(geoCacheKey(settings.weatherCity));
+          if (cached) {
+            const c = JSON.parse(cached);
+            lat = c.lat; lon = c.lon; cityName = c.name;
+          } else {
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(settings.weatherCity)}`);
+            const geoData = await geoRes.json();
+            if (geoData && geoData.length > 0) {
+              lat = parseFloat(geoData[0].lat);
+              lon = parseFloat(geoData[0].lon);
+              cityName = geoData[0].name;
+              localStorage.setItem(geoCacheKey(settings.weatherCity), JSON.stringify({ lat, lon, name: cityName }));
+            }
           }
         } else {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -94,19 +105,26 @@ const WeatherWidget = () => {
             }
             setHourly(hours);
           }
+          setError(false);
+        } else {
+          setError(true);
         }
       } catch (e) {
         console.error('Weather fetch error:', e);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchWeather();
+    // Auto-refresh ogni 30 minuti.
+    const id = setInterval(fetchWeather, 30 * 60 * 1000);
+    return () => clearInterval(id);
   }, [settings.weatherCity]);
 
   return (
-    <div className={`glass-panel w-full md:w-[320px] flex flex-col overflow-hidden self-center xl:self-end transition-opacity duration-300 ${isEditMode ? 'opacity-30 pointer-events-none' : ''}`}>
+    <div className={`glass-panel w-full flex flex-col overflow-hidden transition-opacity duration-300 ${isEditMode ? 'opacity-30 pointer-events-none' : ''}`}>
       <div className="px-4 py-2 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center">
         <h2 className="tech-text text-[10px] text-cyan-50">METEO <span className="text-cyan-700">//</span> ONLINE</h2>
       </div>
@@ -114,6 +132,11 @@ const WeatherWidget = () => {
       <div className="px-5 py-3 flex flex-col items-end gap-2 w-full">
         {loading ? (
           <div className="animate-pulse w-full h-16 bg-cyan-900/50 rounded"></div>
+        ) : error ? (
+          <div className="w-full text-center py-2">
+            <p className="tech-text text-[10px] text-red-400">METEO_OFFLINE</p>
+            <p className="text-[10px] text-cyan-700 font-mono mt-1">Dati non disponibili.</p>
+          </div>
         ) : (
           <div className="w-full flex flex-col items-center">
             <div className="flex items-center justify-between w-full mb-1">

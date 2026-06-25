@@ -35,6 +35,9 @@
     "https://api.fisenko.net/*",
     "https://*.google.com/*",
     "https://nominatim.openstreetmap.org/*",
-    "https://tasks.googleapis.com/*"
+    "https://tasks.googleapis.com/*",
+    "https://www.ansa.it/*",
+    "https://www.ilsole24ore.com/*",
+    "https://www.gazzetta.it/*"
   ]
 }

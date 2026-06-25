@@ -15,10 +15,11 @@ Una dashboard moderna, minimalista ed elegante in stile "HUD" cibernetico per la
 - **Scorciatoie Preferite**: Link rapidi ai tuoi siti e progetti più usati.
 - **Aforismi Motivazionali**: Una rotazione di frasi celebri che si aggiornano ad ogni caricamento della scheda, con pulsante di aggiornamento manuale.
 - **Widget Spotify**: Iframe integrato (abilitabile/disabilitabile dalle impostazioni).
-- **Temi Avanzati (Filtri Olografici)**: Supporto a tre temi senza ricaricamento della pagina:
+- **Temi Avanzati (Filtri Olografici)**: Supporto a quattro temi senza ricaricamento della pagina:
   - **DARK (Ciano)**: Il classico tema cibernetico.
   - **DEV (Viola)**: Estetica neon/viola perfetta per programmatori.
   - **LIGHT (Ghiaccio)**: Interfaccia glassmorphism su sfondo semitrasparente.
+  - **MINIMAL (Apex-like)**: Tema essenziale ad alto contrasto.
 - **Personalizzazione**: Sfondo globale (con sfondo di default "Iron Man") e Nome Utente personalizzabili, salvati localmente.
 
 ## Architettura e Tecnologie

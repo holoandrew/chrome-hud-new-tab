@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGlobal } from '../GlobalContext';
 
-declare var chrome: any;
-
 interface GoogleTask {
   id: string;
   title: string;
@@ -49,7 +47,7 @@ const TasksWidget = () => {
     if (authToken) {
       loadTasks();
     }
-  }, [authToken, currentTab]);
+  }, [authToken]);
 
   const getAuthToken = (interactive: boolean): Promise<string | null> => {
     return new Promise((resolve, reject) => {
@@ -57,11 +55,21 @@ const TasksWidget = () => {
         reject(new Error('chrome.identity non disponibile'));
         return;
       }
-      chrome.identity.getAuthToken({ interactive }, (token: string) => {
+      chrome.identity.getAuthToken({ interactive }, (result) => {
         if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-        else resolve(token);
+        else resolve((typeof result === 'string' ? result : result?.token) ?? null);
       });
     });
+  };
+
+  // Token scaduto/revocato: scartalo dalla cache e forza un nuovo login.
+  const handleExpiredToken = () => {
+    const token = authToken;
+    if (token && typeof chrome !== 'undefined' && chrome.identity) {
+      chrome.identity.removeCachedAuthToken({ token }, () => setAuthToken(null));
+    } else {
+      setAuthToken(null);
+    }
   };
 
   const loadTasks = async () => {
@@ -71,6 +79,7 @@ const TasksWidget = () => {
         const listsRes = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
           headers: { 'Authorization': 'Bearer ' + authToken }
         });
+        if (listsRes.status === 401) return handleExpiredToken();
         if (!listsRes.ok) throw new Error('API Error');
         const lists = await listsRes.json();
         if (lists.items && lists.items.length > 0) {
@@ -82,13 +91,12 @@ const TasksWidget = () => {
       const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=true&showHidden=true`, {
         headers: { 'Authorization': 'Bearer ' + authToken }
       });
+      if (res.status === 401) return handleExpiredToken();
       if (!res.ok) throw new Error('API Error');
       const data = await res.json();
       setTasks(data.items || []);
-    } catch (e: any) {
-      if (e.message && e.message.includes('401')) {
-        chrome.identity.removeCachedAuthToken({ token: authToken }, () => setAuthToken(null));
-      }
+    } catch (e) {
+      console.error('Tasks load error:', e);
     }
   };
 
@@ -150,7 +158,7 @@ const TasksWidget = () => {
   const filteredTasks = tasks.filter(t => currentTab === 'active' ? t.status === 'needsAction' : t.status === 'completed');
 
   return (
-    <div className={`glass-panel w-full md:w-[320px] flex flex-col overflow-hidden h-[400px] self-center xl:self-end transition-opacity duration-300 ${isEditMode ? 'opacity-30 pointer-events-none' : ''}`}>
+    <div className={`glass-panel w-full flex flex-col overflow-hidden h-[400px] transition-opacity duration-300 ${isEditMode ? 'opacity-30 pointer-events-none' : ''}`}>
       <div className="px-4 py-3 border-b border-cyan-500/20 shrink-0 bg-[#050b14]/40 flex justify-between items-center group">
         <div className="flex gap-2 items-center text-[9px] sm:text-[10px]">
           <h2 className="tech-text text-[10px] text-cyan-50 mr-1">G_TASKS</h2>
@@ -202,11 +210,11 @@ const TasksWidget = () => {
               />
               
               <div className="absolute right-3 flex items-center gap-1.5">
-                <button type="button" onClick={toggleMic} className={`transition-colors ${isListening ? 'text-cyan-300 animate-pulse' : 'text-cyan-700 hover:text-cyan-400'}`} title="Dettatura vocale">
+                <button type="button" onClick={toggleMic} aria-label="Dettatura vocale" className={`transition-colors ${isListening ? 'text-cyan-300 animate-pulse' : 'text-cyan-700 hover:text-cyan-400'}`} title="Dettatura vocale">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                 </button>
 
-                <button type="submit" className="text-cyan-500 hover:text-cyan-300 transition-colors pl-1 border-l border-cyan-500/20">
+                <button type="submit" aria-label="Aggiungi task" className="text-cyan-500 hover:text-cyan-300 transition-colors pl-1 border-l border-cyan-500/20">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
                 </button>
               </div>

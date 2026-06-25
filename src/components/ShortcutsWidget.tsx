@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ReactSortable } from 'react-sortablejs';
-import { PlusSquare, Pencil, Trash2, GripVertical, Link as LinkIcon, X, Globe } from 'lucide-react';
+import { PlusSquare, Trash2, GripVertical, X, Globe } from 'lucide-react';
 import { useGlobal } from '../GlobalContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -58,14 +58,22 @@ const ShortcutIcon = ({ link, settings }: { link: Shortcut, settings: any }) => 
 const ShortcutsWidget = () => {
   const { isEditMode, settings } = useGlobal();
   const [sections, setSections] = useState<Section[]>(() => {
-    const saved = localStorage.getItem('dashboard_shortcuts_sections');
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem('dashboard_shortcuts_sections');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      /* dato corrotto: usa i default */
+    }
     return defaultSections;
   });
 
   const [addingToSection, setAddingToSection] = useState<string | null>(null);
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
+  const [addingSection, setAddingSection] = useState(false);
+  const [sectionName, setSectionName] = useState('');
+
+  const dragDisabled = !isEditMode || !settings.enableDragDrop;
 
   useEffect(() => {
     localStorage.setItem('dashboard_shortcuts_sections', JSON.stringify(sections));
@@ -118,11 +126,13 @@ const ShortcutsWidget = () => {
     setSections(sections.map(s => s.id === sectionId ? { ...s, links: s.links.filter(l => l.id !== linkId) } : s));
   };
 
-  const addSection = () => {
-    const title = prompt("Nome della nuova sezione?");
-    if (title) {
-      setSections([...sections, { id: Date.now().toString(), title: title.toUpperCase() + ' // SHORTCUTS', links: [] }]);
-    }
+  const handleAddSection = (e: React.FormEvent) => {
+    e.preventDefault();
+    const title = sectionName.trim();
+    if (!title) return;
+    setSections([...sections, { id: Date.now().toString(), title: title.toUpperCase() + ' // SHORTCUTS', links: [] }]);
+    setSectionName('');
+    setAddingSection(false);
   };
 
   return (
@@ -132,12 +142,12 @@ const ShortcutsWidget = () => {
         setList={setSections}
         group="sections"
         animation={200}
-        disabled={!isEditMode}
+        disabled={dragDisabled}
         handle=".section-handle"
         className="space-y-8 w-full"
       >
         {sections.map(section => (
-          <div key={section.id} className="w-full flex flex-col relative group">
+          <div key={section.id} className="w-full flex flex-col relative">
             
             <div className="flex items-center gap-2 mb-4 border-b border-cyan-500/20 pb-1">
               {isEditMode && (
@@ -150,8 +160,8 @@ const ShortcutsWidget = () => {
               </h3>
               {isEditMode && (
                 <div className="flex gap-2">
-                  <button onClick={() => setAddingToSection(section.id)} className="text-cyan-500 hover:text-cyan-300"><PlusSquare className="w-4 h-4" /></button>
-                  <button onClick={() => setSections(sections.filter(s => s.id !== section.id))} className="text-red-500 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => setAddingToSection(section.id)} aria-label="Aggiungi link" className="text-cyan-500 hover:text-cyan-300"><PlusSquare className="w-4 h-4" /></button>
+                  <button onClick={() => setSections(sections.filter(s => s.id !== section.id))} aria-label="Elimina sezione" className="text-red-500 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
                 </div>
               )}
             </div>
@@ -161,7 +171,7 @@ const ShortcutsWidget = () => {
               setList={(newLinks) => setSections(prev => prev.map(s => s.id === section.id ? { ...s, links: newLinks } : s))}
               group="links"
               animation={200}
-              disabled={!isEditMode}
+              disabled={dragDisabled}
               className={`grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-x-2 gap-y-4 justify-items-center w-full ${isEditMode && section.links.length === 0 ? 'min-h-[80px] bg-cyan-900/10 rounded-xl border border-dashed border-cyan-500/30' : ''}`}
             >
               {section.links.map(link => (
@@ -190,10 +200,28 @@ const ShortcutsWidget = () => {
       </ReactSortable>
 
       {isEditMode && (
-        <button onClick={addSection} className="mt-4 px-6 py-2 border border-dashed border-cyan-500/50 rounded-xl text-cyan-500 hover:text-cyan-300 hover:bg-cyan-900/20 transition-all font-mono text-sm self-center">
+        <button onClick={() => setAddingSection(true)} className="mt-4 px-6 py-2 border border-dashed border-cyan-500/50 rounded-xl text-cyan-500 hover:text-cyan-300 hover:bg-cyan-900/20 transition-all font-mono text-sm self-center">
           + NUOVA SEZIONE
         </button>
       )}
+
+      {/* New Section Modal */}
+      <AnimatePresence>
+        {addingSection && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-sm p-6 rounded-2xl bg-[#050b14] border border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.3)] backdrop-blur-xl">
+              <div className="flex items-center justify-between mb-4 border-b border-cyan-500/30 pb-2">
+                <h3 className="text-cyan-300 font-bold tech-text">NUOVA SEZIONE</h3>
+                <button onClick={() => setAddingSection(false)} aria-label="Chiudi" className="text-cyan-600 hover:text-cyan-300"><X className="w-5 h-5" /></button>
+              </div>
+              <form onSubmit={handleAddSection} className="flex flex-col gap-4">
+                <input autoFocus type="text" value={sectionName} onChange={e => setSectionName(e.target.value)} placeholder="Nome sezione (es. Lavoro)" className="w-full p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:border-cyan-400 text-cyan-100" required />
+                <button type="submit" className="w-full py-2 bg-cyan-900/50 border border-cyan-500 rounded text-cyan-100 hover:bg-cyan-600/50 transition">CREA SEZIONE</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Add Link Modal */}
       <AnimatePresence>

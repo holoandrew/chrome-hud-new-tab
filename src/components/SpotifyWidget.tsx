@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 
+const DEFAULT_PLAYLIST = '37i9dQZF1DXcBWIGoYBM5M'; // Today's Top Hits
+
 const SpotifyWidget = () => {
-  const [playlistId, setPlaylistId] = useState('37i9dQZF1DXcBWIGoYBM5M'); // Default: Today's Top Hits
+  const [playlistId, setPlaylistId] = useState(
+    () => localStorage.getItem('dashboard_spotify_playlist') || DEFAULT_PLAYLIST
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [inputVal, setInputVal] = useState(playlistId);
 
   const savePlaylist = (e: React.FormEvent) => {
     e.preventDefault();
-    setPlaylistId(inputVal);
+    const id = inputVal.trim() || DEFAULT_PLAYLIST;
+    setPlaylistId(id);
+    localStorage.setItem('dashboard_spotify_playlist', id);
     setIsEditing(false);
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useGlobal } from '../GlobalContext';
 
 interface Article {
@@ -16,31 +16,63 @@ const RSS_FEEDS: Record<string, string> = {
   'sport24': 'https://www.gazzetta.it/rss/home.xml'
 };
 
+// Parsing diretto dell'XML RSS (funziona in estensione con host_permissions).
+const fetchDirect = async (feedUrl: string): Promise<Article[]> => {
+  const res = await fetch(feedUrl);
+  if (!res.ok) throw new Error('RSS HTTP ' + res.status);
+  const xml = new DOMParser().parseFromString(await res.text(), 'application/xml');
+  if (xml.querySelector('parsererror')) throw new Error('RSS parse error');
+  return Array.from(xml.querySelectorAll('item')).slice(0, 8).map((item) => {
+    const get = (tag: string) => item.querySelector(tag)?.textContent?.trim() || '';
+    const media =
+      item.querySelector('enclosure')?.getAttribute('url') ||
+      item.getElementsByTagName('media:content')[0]?.getAttribute('url') ||
+      item.getElementsByTagName('media:thumbnail')[0]?.getAttribute('url') ||
+      '';
+    return {
+      title: get('title') || 'Senza Titolo',
+      link: get('link') || '#',
+      pubDate: get('pubDate'),
+      thumbnail: media,
+    };
+  });
+};
+
+// Fallback via proxy quando il fetch diretto è bloccato da CORS (es. in dev web).
+const fetchViaProxy = async (feedUrl: string): Promise<Article[]> => {
+  const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
+  const data = await res.json();
+  if (!data.items) throw new Error('proxy: no items');
+  return data.items.slice(0, 8).map((item: any) => ({
+    title: item.title || 'Senza Titolo',
+    link: item.link || '#',
+    pubDate: item.pubDate || '',
+    thumbnail: item.thumbnail || item.enclosure?.link || '',
+  }));
+};
+
 const NewsWidget = () => {
   const { settings } = useGlobal();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchNews = async () => {
       setLoading(true);
+      setError(false);
+      const feedUrl = RSS_FEEDS[settings.newsTopic] || RSS_FEEDS['tecnologia'];
       try {
-        const feedUrl = RSS_FEEDS[settings.newsTopic] || RSS_FEEDS['tecnologia'];
-        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        
-        if (data.items) {
-          const parsedArticles = data.items.slice(0, 8).map((item: any) => ({
-            title: item.title || 'Senza Titolo',
-            link: item.link || '#',
-            pubDate: item.pubDate || '',
-            thumbnail: item.thumbnail || item.enclosure?.link || ''
-          }));
-          setArticles(parsedArticles);
+        let items: Article[];
+        try {
+          items = await fetchDirect(feedUrl);
+        } catch {
+          items = await fetchViaProxy(feedUrl);
         }
+        setArticles(items);
       } catch (e) {
         console.error('Error fetching news:', e);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -57,6 +89,8 @@ const NewsWidget = () => {
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {loading ? (
           <p className="text-cyan-500 text-sm animate-pulse">Recupero dati in corso...</p>
+        ) : error ? (
+          <p className="text-red-400 text-xs tech-text">NEWS_OFFLINE // feed non raggiungibile.</p>
         ) : (
           <ul className="flex flex-col gap-4">
             {articles.map((article, i) => (
