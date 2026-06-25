@@ -18,23 +18,36 @@ interface Widget {
   type: string;
 }
 
+// Meteo sopra News di default (stessa colonna).
 const DEFAULT_LEFT: Widget[] = [
-  { id: 'w-spotify', type: 'spotify' },
+  { id: 'w-weather', type: 'weather' },
   { id: 'w-news', type: 'news' },
+  { id: 'w-spotify', type: 'spotify' },
 ];
 const DEFAULT_RIGHT: Widget[] = [
-  { id: 'w-weather', type: 'weather' },
   { id: 'w-quote', type: 'quote' },
   { id: 'w-tasks', type: 'tasks' },
 ];
 
-// Riconcilia il layout salvato con i default: scarta widget rimossi e
-// appende quelli nuovi non ancora presenti in nessuna colonna salvata.
-const reconcile = (saved: Widget[], known: Widget[], otherSaved: Widget[]): Widget[] => {
-  const knownTypes = new Set(known.map((w) => w.type));
+// Bump quando cambiano i default: forza un reset una-tantum del layout salvato.
+const LAYOUT_VERSION = '3';
+const ALL_DEFAULTS = [...DEFAULT_LEFT, ...DEFAULT_RIGHT];
+const VALID_TYPES = new Set(ALL_DEFAULTS.map((w) => w.type));
+
+const migrateLayout = () => {
+  if (localStorage.getItem('hud_layout_version') !== LAYOUT_VERSION) {
+    localStorage.removeItem('hud_layout_left');
+    localStorage.removeItem('hud_layout_right');
+    localStorage.setItem('hud_layout_version', LAYOUT_VERSION);
+  }
+};
+
+// Riconcilia il layout salvato: tiene QUALSIASI widget valido (anche spostato
+// di colonna) e appende solo i widget "di casa" non presenti da nessuna parte.
+const reconcile = (saved: Widget[], homeDefaults: Widget[], otherSaved: Widget[]): Widget[] => {
   const present = new Set([...saved, ...otherSaved].map((w) => w.type));
-  const kept = saved.filter((w) => knownTypes.has(w.type));
-  const added = known.filter((w) => !present.has(w.type));
+  const kept = saved.filter((w) => VALID_TYPES.has(w.type));
+  const added = homeDefaults.filter((w) => !present.has(w.type));
   return [...kept, ...added];
 };
 
@@ -105,9 +118,10 @@ const WidgetColumn = ({
 
 const WidgetManager = () => {
   const { settings } = useGlobal();
-  const [leftCol, setLeftCol] = useState<Widget[]>(() =>
-    loadColumn('hud_layout_left', DEFAULT_LEFT, DEFAULT_RIGHT)
-  );
+  const [leftCol, setLeftCol] = useState<Widget[]>(() => {
+    migrateLayout();
+    return loadColumn('hud_layout_left', DEFAULT_LEFT, DEFAULT_RIGHT);
+  });
   const [rightCol, setRightCol] = useState<Widget[]>(() =>
     loadColumn('hud_layout_right', DEFAULT_RIGHT, DEFAULT_LEFT)
   );

@@ -7,9 +7,10 @@ const GoogleServicesWidget = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`, '_blank');
-    }
+    const q = searchQuery.trim();
+    if (!q) return;
+    // udm=50 = Google AI Mode (risposta conversazionale con citazioni).
+    window.open(`https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`, '_blank');
   };
 
   return (

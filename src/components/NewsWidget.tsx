@@ -16,6 +16,41 @@ const RSS_FEEDS: Record<string, string> = {
   'sport24': 'https://www.gazzetta.it/rss/home.xml'
 };
 
+const faviconFor = (link: string): string => {
+  try {
+    return `https://www.google.com/s2/favicons?domain=${new URL(link).hostname}&sz=64`;
+  } catch {
+    return '';
+  }
+};
+
+// Estrae og:image dalla pagina articolo (host già in host_permissions).
+// Timeout breve per non bloccare il render se un sito è lento.
+const fetchOgImage = async (link: string): Promise<string> => {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(link, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return '';
+    const html = (await res.text()).slice(0, 60000); // og:image sta nell'<head>
+    const m =
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    return m ? m[1] : '';
+  } catch {
+    return '';
+  }
+};
+
+// Riempi le thumbnail mancanti: og:image dell'articolo, poi favicon di ripiego.
+const enrichThumbnails = (items: Article[]): Promise<Article[]> =>
+  Promise.all(
+    items.map(async (a) =>
+      a.thumbnail ? a : { ...a, thumbnail: (await fetchOgImage(a.link)) || faviconFor(a.link) }
+    )
+  );
+
 // Parsing diretto dell'XML RSS (funziona in estensione con host_permissions).
 const fetchDirect = async (feedUrl: string): Promise<Article[]> => {
   const res = await fetch(feedUrl);
@@ -69,7 +104,9 @@ const NewsWidget = () => {
         } catch {
           items = await fetchViaProxy(feedUrl);
         }
+        // Mostra subito il testo, poi arricchisci con le immagini.
         setArticles(items);
+        setArticles(await enrichThumbnails(items));
       } catch (e) {
         console.error('Error fetching news:', e);
         setError(true);
@@ -97,7 +134,15 @@ const NewsWidget = () => {
               <li key={i} className="flex gap-3 items-start group border-b border-cyan-500/10 pb-3 last:border-0 last:pb-0">
                 {article.thumbnail && (
                   <div className="w-16 h-16 shrink-0 overflow-hidden rounded border border-cyan-500/20">
-                    <img src={article.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img
+                      src={article.thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        const fb = faviconFor(article.link);
+                        if (fb && e.currentTarget.src !== fb) e.currentTarget.src = fb;
+                      }}
+                    />
                   </div>
                 )}
                 <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cyan-50 group-hover:text-cyan-300 transition-colors leading-snug line-clamp-3">
