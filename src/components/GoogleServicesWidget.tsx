@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { useGlobal } from '../GlobalContext';
 
 const GoogleServicesWidget = () => {
   const { isEditMode, settings } = useGlobal();
   const [searchQuery, setSearchQuery] = useState('');
+  const [aiMode, setAiMode] = useState(() => localStorage.getItem('dashboard_ai_mode') !== '0');
+
+  const toggleAiMode = () => {
+    setAiMode((prev) => {
+      const next = !prev;
+      localStorage.setItem('dashboard_ai_mode', next ? '1' : '0');
+      return next;
+    });
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
-    // udm=50 = Google AI Mode (risposta conversazionale con citazioni).
-    window.open(`https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`, '_blank');
+    // udm=50 = Google AI Mode. Richiede che sia abilitato per l'account/regione,
+    // altrimenti Google ripiega sui risultati classici.
+    const base = aiMode
+      ? `https://www.google.com/search?udm=50&q=`
+      : `https://www.google.com/search?q=`;
+    window.open(base + encodeURIComponent(q), '_blank');
   };
 
   return (
@@ -28,7 +42,21 @@ const GoogleServicesWidget = () => {
                 placeholder="Cerca su Google o digita un URL..." 
                 className="w-full bg-transparent border-none text-cyan-50 focus:outline-none placeholder-cyan-500/50 text-lg py-3" 
               />
-              <button type="submit" className="p-3 text-cyan-400 hover:text-cyan-200 transition-colors">
+              <button
+                type="button"
+                onClick={toggleAiMode}
+                aria-pressed={aiMode}
+                title={aiMode ? 'AI Mode attivo' : 'AI Mode disattivo'}
+                className={`flex items-center gap-1.5 px-3 py-1.5 mr-1 rounded-full border text-xs font-medium tech-text transition-all shrink-0 ${
+                  aiMode
+                    ? 'bg-cyan-500/20 border-cyan-400/60 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                    : 'bg-transparent border-cyan-500/20 text-cyan-600 hover:text-cyan-400'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                AI
+              </button>
+              <button type="submit" aria-label="Cerca" className="p-3 text-cyan-400 hover:text-cyan-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
