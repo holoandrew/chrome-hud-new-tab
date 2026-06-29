@@ -75,3 +75,14 @@ async function checkTasksDueToday() {
         console.warn("Tasks sync in background fallita o utente non loggato:", e);
     }
 }
+
+// Proxy per fetch cross-origin (CORS bypass via service worker)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'FETCH_URL') {
+        fetch(request.url)
+            .then(res => res.text())
+            .then(text => sendResponse({ ok: true, data: text }))
+            .catch(err => sendResponse({ ok: false, error: err.message }));
+        return true; // mantiene il canale aperto per la risposta async
+    }
+});

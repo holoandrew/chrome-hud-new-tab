@@ -9,11 +9,46 @@ interface Article {
 }
 
 const RSS_FEEDS: Record<string, string> = {
-  'tecnologia': 'https://www.ansa.it/sito/notizie/tecnologia/tecnologia_rss.xml',
-  'italia': 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml',
-  'mondo': 'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml',
+  'tecnologia': 'https://www.ilsole24ore.com/rss/tecnologia.xml',
+  'italia': 'https://www.ilsole24ore.com/rss/italia.xml',
+  'mondo': 'https://www.ilsole24ore.com/rss/mondo.xml',
   'finanza': 'https://www.ilsole24ore.com/rss/finanza.xml',
-  'sport24': 'https://www.gazzetta.it/rss/home.xml'
+  'sport24': 'https://www.corrieredellosport.it/rss/calcio'
+};
+
+/**
+ * Rimuove i tag HTML e decodifica le entità (es. &rsquo; &nbsp; &quot;)
+ * in sicurezza via DOMParser — niente innerHTML, niente rischio XSS.
+ */
+const sanitizeText = (raw: string): string => {
+  if (!raw) return '';
+  const doc = new DOMParser().parseFromString(raw, 'text/html');
+  return doc.body.textContent?.trim() || '';
+};
+
+/** Estrae l'URL thumbnail da un <item> RSS provando le convenzioni comuni. */
+const extractThumbnail = (item: Element): string => {
+  // 1. <media:content url="...">
+  const mediaContent = item.getElementsByTagNameNS('http://search.yahoo.com/mrss/', 'content')[0];
+  if (mediaContent?.getAttribute('url')) return mediaContent.getAttribute('url')!;
+
+  // 2. <media:thumbnail url="...">
+  const mediaThumbnail = item.getElementsByTagNameNS('http://search.yahoo.com/mrss/', 'thumbnail')[0];
+  if (mediaThumbnail?.getAttribute('url')) return mediaThumbnail.getAttribute('url')!;
+
+  // 3. <enclosure url="..." type="image/...">
+  const enclosure = item.querySelector('enclosure');
+  if (enclosure && (enclosure.getAttribute('type') || '').startsWith('image/')) {
+    const url = enclosure.getAttribute('url');
+    if (url) return url;
+  }
+
+  // 4. primo <img> dentro la <description> CDATA
+  const desc = item.querySelector('description')?.textContent || '';
+  const imgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch?.[1]) return imgMatch[1];
+
+  return '';
 };
 
 const faviconFor = (link: string): string => {
@@ -25,7 +60,7 @@ const faviconFor = (link: string): string => {
 };
 
 // Estrae og:image dalla pagina articolo (host già in host_permissions).
-// Timeout breve per non bloccare il render se un sito è lento.
+// Usato solo come ripiego per i feed privi di immagini nell'XML.
 const fetchOgImage = async (link: string): Promise<string> => {
   try {
     const ctrl = new AbortController();
@@ -51,29 +86,28 @@ const enrichThumbnails = (items: Article[]): Promise<Article[]> =>
     )
   );
 
-// Parsing diretto dell'XML RSS (funziona in estensione con host_permissions).
-const fetchDirect = async (feedUrl: string): Promise<Article[]> => {
-  const res = await fetch(feedUrl);
-  if (!res.ok) throw new Error('RSS HTTP ' + res.status);
-  const xml = new DOMParser().parseFromString(await res.text(), 'application/xml');
+// Parsa l'XML RSS in articoli.
+const parseFeed = (xmlText: string): Article[] => {
+  const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
   if (xml.querySelector('parsererror')) throw new Error('RSS parse error');
-  return Array.from(xml.querySelectorAll('item')).slice(0, 8).map((item) => {
-    const get = (tag: string) => item.querySelector(tag)?.textContent?.trim() || '';
-    const media =
-      item.querySelector('enclosure')?.getAttribute('url') ||
-      item.getElementsByTagName('media:content')[0]?.getAttribute('url') ||
-      item.getElementsByTagName('media:thumbnail')[0]?.getAttribute('url') ||
-      '';
-    return {
-      title: get('title') || 'Senza Titolo',
-      link: get('link') || '#',
-      pubDate: get('pubDate'),
-      thumbnail: media,
-    };
-  });
+  return Array.from(xml.querySelectorAll('item')).slice(0, 8).map((item) => ({
+    title: sanitizeText(item.querySelector('title')?.textContent || '') || 'Senza Titolo',
+    link: item.querySelector('link')?.textContent?.trim() || '#',
+    pubDate: item.querySelector('pubDate')?.textContent?.trim() || '',
+    thumbnail: extractThumbnail(item),
+  }));
 };
 
-// Fallback via proxy quando il fetch diretto è bloccato da CORS (es. in dev web).
+// Fetch via background service worker (bypassa CORS in modo affidabile).
+const fetchViaSW = async (feedUrl: string): Promise<Article[]> => {
+  const response: { ok: boolean; data?: string; error?: string } = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ action: 'FETCH_URL', url: feedUrl }, resolve);
+  });
+  if (!response?.ok || !response.data) throw new Error(response?.error || 'Fetch failed');
+  return parseFeed(response.data);
+};
+
+// Ripiego via proxy quando il background non è disponibile (es. dev web).
 const fetchViaProxy = async (feedUrl: string): Promise<Article[]> => {
   const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`);
   const data = await res.json();
@@ -100,11 +134,11 @@ const NewsWidget = () => {
       try {
         let items: Article[];
         try {
-          items = await fetchDirect(feedUrl);
+          items = await fetchViaSW(feedUrl);
         } catch {
           items = await fetchViaProxy(feedUrl);
         }
-        // Mostra subito il testo, poi arricchisci con le immagini.
+        // Mostra subito il testo, poi arricchisci le thumbnail mancanti.
         setArticles(items);
         setArticles(await enrichThumbnails(items));
       } catch (e) {
@@ -129,24 +163,31 @@ const NewsWidget = () => {
         ) : error ? (
           <p className="text-red-400 text-xs tech-text">NEWS_OFFLINE // feed non raggiungibile.</p>
         ) : (
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-1">
             {articles.map((article, i) => (
-              <li key={i} className="flex gap-3 items-start group border-b border-cyan-500/10 pb-3 last:border-0 last:pb-0">
-                {article.thumbnail && (
-                  <div className="w-16 h-16 shrink-0 overflow-hidden rounded border border-cyan-500/20">
-                    <img
-                      src={article.thumbnail}
-                      alt=""
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        const fb = faviconFor(article.link);
-                        if (fb && e.currentTarget.src !== fb) e.currentTarget.src = fb;
-                      }}
-                    />
-                  </div>
-                )}
-                <a href={article.link} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cyan-50 group-hover:text-cyan-300 transition-colors leading-snug line-clamp-3">
-                  {article.title}
+              <li key={i}>
+                <a
+                  href={article.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex gap-3 items-start p-2 rounded-lg border border-transparent hover:border-cyan-500/20 hover:bg-cyan-500/5 transition-all duration-300"
+                >
+                  {article.thumbnail && (
+                    <div className="w-16 h-16 shrink-0 overflow-hidden rounded border border-cyan-500/20">
+                      <img
+                        src={article.thumbnail}
+                        alt=""
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          const fb = faviconFor(article.link);
+                          if (fb && e.currentTarget.src !== fb) e.currentTarget.src = fb;
+                        }}
+                      />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-cyan-50 group-hover:text-cyan-300 transition-colors leading-snug line-clamp-3">
+                    {article.title}
+                  </span>
                 </a>
               </li>
             ))}
