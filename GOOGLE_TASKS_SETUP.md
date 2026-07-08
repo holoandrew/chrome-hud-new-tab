@@ -65,3 +65,38 @@ Ecco i passaggi da seguire o da condividere con il tuo team per creare le propri
 4. Clicca sul tastino 🔄 (Aggiorna) sulla card dell'estensione in `chrome://extensions/`.
 
 Ecco fatto! Ora se i tuoi colleghi cliccano su "GOOGLE_TASKS // AUTH_REQ", la finestra di Google si aprirà correttamente e permetterà loro di loggarsi e visualizzare i loro impegni.
+
+## 6. Mantenere lo stesso ID su più PC (installazione multi-macchina)
+
+> **Perché serve:** l'`ID client OAuth` di tipo "Estensione di Chrome" è legato a uno **specifico ID di estensione**. Un'estensione caricata "non pacchettizzata" ottiene un ID **diverso su ogni PC/percorso**. Se installi la stessa estensione su un secondo PC senza accorgimenti, l'ID cambia e Google restituisce `403 / bad client id`.
+
+La soluzione pulita è aggiungere un campo `key` al manifest: così l'ID dell'estensione diventa **identico su tutti i PC** e un solo `client_id` OAuth funziona ovunque.
+
+### Come generare il `key`
+
+1. Sul primo PC, apri `chrome://extensions/`, clicca **Pacchettizza estensione** (Pack extension), seleziona la cartella `dist` e lascia vuoto il campo della chiave privata. Chrome genererà due file accanto alla cartella: `dist.crx` e **`dist.pem`** (la chiave privata — conservala e **non** committarla).
+2. Ricava la stringa `key` dalla chiave privata. Ti serve `openssl` (incluso in Git Bash su Windows):
+   ```bash
+   openssl rsa -in dist.pem -pubout -outform DER | openssl base64 -A
+   ```
+   Copia la lunga stringa base64 restituita.
+3. Aggiungi il campo `key` in cima al tuo `public/manifest.json` (e, se vuoi che resti nel template condiviso, anche in `public/manifest.example.json`):
+   ```json
+   {
+     "manifest_version": 3,
+     "key": "INCOLLA_QUI_LA_STRINGA_BASE64",
+     "name": "Chrome HUD New Tab",
+     ...
+   }
+   ```
+4. Ricompila (`npm run build`) e ricarica l'estensione. In `chrome://extensions/` l'**ID ora sarà stabile** e uguale su ogni PC che usa lo stesso `key`.
+5. Verifica che questo ID coincida con quello registrato nell'**ID client OAuth** (passo 4). Se non coincide, aggiornalo o crea un nuovo ID client con l'ID corretto.
+
+> Nota: il file `.pem` è la tua chiave privata di firma — trattalo come una password. Il `key` nel manifest è invece la chiave **pubblica** e può stare nel repo senza rischi.
+
+### Alternativa senza `key`
+
+Se preferisci non usare il `key`, su ogni nuovo PC:
+1. Carica l'estensione e leggi il nuovo **ID** in `chrome://extensions/`.
+2. Vai su Google Cloud Console → **Credenziali** → crea un ulteriore **ID client OAuth → Estensione di Chrome** con quel nuovo ID (puoi tenere più client sulla stessa app).
+3. Metti il `client_id` corrispondente nel `manifest.json` di quel PC.
