@@ -75,8 +75,8 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
             
             <div>
               <p className="text-xs text-cyan-500 mb-1 font-mono">Immagine Sfondo Globale:</p>
-              <input 
-                type="file" 
+              <input
+                type="file"
                 accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -90,12 +90,24 @@ const SettingsModal = ({ onClose }: { onClose: () => void }) => {
                 }}
                 className="w-full p-1.5 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none text-cyan-100 text-xs"
               />
-              <button 
+              <button
                 onClick={() => updateSettings({ background: null })}
                 className="text-[10px] text-cyan-600 hover:text-cyan-400 mt-1 underline tech-text"
               >
-                RIPRISTINA SFONDO DEFAULT
+                RIPRISTINA SFONDO PREDEFINITO
               </button>
+            </div>
+
+            <div>
+              <p className="text-xs text-cyan-500 mb-1 font-mono">Sfondo Predefinito (se nessuna immagine caricata):</p>
+              <select
+                value={settings.backgroundPreset}
+                onChange={(e) => updateSettings({ backgroundPreset: e.target.value as any })}
+                className="w-full p-2 bg-[#0a1120] border border-cyan-500/30 rounded focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(6,182,212,0.5)] transition text-cyan-100 tech-text"
+              >
+                <option value="ironman">IRON MAN (SCURO)</option>
+                <option value="minimal">MINIMAL (CHIARO)</option>
+              </select>
             </div>
 
             <div>

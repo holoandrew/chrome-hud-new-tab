@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type Theme = 'theme-dark' | 'theme-dev' | 'theme-light' | 'theme-minimal';
+export type BackgroundPreset = 'ironman' | 'minimal';
 
 interface Settings {
   userName: string;
@@ -8,6 +9,7 @@ interface Settings {
   newsTopic: string;
   weatherCity: string;
   background: string | null;
+  backgroundPreset: BackgroundPreset;
   bgOpacity: number;
   showWeather: boolean;
   showTasks: boolean;
@@ -33,6 +35,7 @@ const defaultSettings: Settings = {
   newsTopic: 'tecnologia',
   weatherCity: '',
   background: null,
+  backgroundPreset: 'ironman',
   bgOpacity: 60,
   showWeather: true,
   showTasks: true,

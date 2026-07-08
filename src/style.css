@@ -128,7 +128,6 @@ body.theme-light img.invert {
 
 /* TEMA MINIMAL (Apex-like) */
 body.theme-minimal {
-  background-image: url('../public/bg-minimal.jpg'); /* Imposta un'immagine minimal in public, o colore a tinta unita */
   background-color: #f8fafc;
 }
 

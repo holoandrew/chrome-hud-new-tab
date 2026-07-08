@@ -25,7 +25,7 @@ Una dashboard moderna, minimalista ed elegante in stile "HUD" cibernetico per la
   - **DEV (Viola)**: Estetica neon/viola perfetta per programmatori.
   - **LIGHT (Ghiaccio)**: Interfaccia glassmorphism su sfondo semitrasparente.
   - **MINIMAL (Apex-like)**: Tema essenziale ad alto contrasto.
-- **Personalizzazione**: Sfondo globale (con sfondo di default "Iron Man"), opacità dell'overlay e Nome Utente personalizzabili, tutti salvati localmente. Ogni widget può essere mostrato/nascosto dalle impostazioni.
+- **Personalizzazione**: Sfondo globale caricabile (o preset predefinito a scelta tra "Iron Man" scuro e "Minimal" chiaro), opacità dell'overlay e Nome Utente personalizzabili, tutti salvati localmente. Ogni widget può essere mostrato/nascosto dalle impostazioni.
 
 ## Architettura e Tecnologie
 

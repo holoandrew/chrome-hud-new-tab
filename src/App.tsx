@@ -16,7 +16,15 @@ function App() {
     }
   }, [settings.theme]);
 
-  const customBgStyle = settings.background ? { backgroundImage: `url(${settings.background})` } : { backgroundImage: `url('/bg-default.jpg')` };
+  const BACKGROUND_PRESETS: Record<string, string> = {
+    ironman: `url('/bg-default.jpg')`,
+    minimal: 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
+  };
+  const customBgStyle = {
+    backgroundImage: settings.background
+      ? `url(${settings.background})`
+      : BACKGROUND_PRESETS[settings.backgroundPreset] || BACKGROUND_PRESETS.ironman,
+  };
 
   return (
     <div className={`min-h-screen w-full relative overflow-x-hidden md:overflow-hidden bg-cover bg-center bg-no-repeat font-sans flex flex-col p-4 md:p-0 gap-6 md:block ${settings.theme}`} style={customBgStyle}>
