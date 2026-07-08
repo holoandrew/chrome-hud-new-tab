@@ -104,8 +104,12 @@ const TasksWidget = () => {
     try {
       const token = await getAuthToken(true);
       if (token) setAuthToken(token);
-    } catch (e) {
-      alert('Autenticazione fallita. Devi avviare l\'app come Estensione Chrome per usare questa feature.');
+    } catch (e: any) {
+      if (typeof chrome === 'undefined' || !chrome.identity) {
+        alert('Autenticazione fallita. Devi avviare l\'app come Estensione Chrome per usare questa feature (chrome.identity non disponibile: probabilmente stai testando con "npm run dev" nel browser invece di caricare la cartella dist come estensione).');
+      } else {
+        alert('Autenticazione fallita: ' + (e?.message || 'errore sconosciuto') + '\n\nControlla in Google Cloud Console che: 1) l\'ID client OAuth (tipo "Estensione di Chrome") corrisponda esattamente all\'ID mostrato in chrome://extensions per questa estensione; 2) la Google Tasks API sia abilitata; 3) il tuo account sia tra gli Utenti di Test (se l\'app OAuth è in stato "Testing").');
+      }
     }
   };
 
