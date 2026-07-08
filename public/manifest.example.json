@@ -1,5 +1,6 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq8Cqimlgp/yYYI+lKpj20PYltj25OvS+DGscwfOP9fWbzymFRCvybAuKgiTyHrbMW4NTui7fKUMB/8Nmu6ksx+sg0pGsisIUBnlr2XUMiGGkyqshu+j6HK9BFq9db9Kupf0FSNmdiC5vWNyv3oE8ka2BmfCw08P8vSsp0USxRTyFBw/+fqGzRu4Ghjtb4wUF/lVVtiGRm0l3BRaU9Q/GuRM3o23odSehl1guYnSY+JZgLZO9oZP/Ynxo0CnFtLGLQ8UzZqznHDK+ey29GMUTmRNx7yZFEuBM4V4sa63pBsBiRbG+FNfsuehJfH1+oppcLtKS/SeF+RBzWjxkzDzFLQIDAQAB",
   "name": "Chrome HUD New Tab",
   "version": "2.0",
   "description": "Una dashboard moderna in React con widget Meteo, Task, News, Shortcuts e Temi personalizzati.",

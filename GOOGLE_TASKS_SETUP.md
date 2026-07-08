@@ -68,9 +68,17 @@ Ecco fatto! Ora se i tuoi colleghi cliccano su "GOOGLE_TASKS // AUTH_REQ", la fi
 
 ## 6. Mantenere lo stesso ID su più PC (installazione multi-macchina)
 
-> **Perché serve:** l'`ID client OAuth` di tipo "Estensione di Chrome" è legato a uno **specifico ID di estensione**. Un'estensione caricata "non pacchettizzata" ottiene un ID **diverso su ogni PC/percorso**. Se installi la stessa estensione su un secondo PC senza accorgimenti, l'ID cambia e Google restituisce `403 / bad client id`.
+> **Perché serve:** l'`ID client OAuth` di tipo "Estensione di Chrome" è legato a uno **specifico ID di estensione**. Un'estensione caricata "non pacchettizzata" ottiene un ID **diverso su ogni PC/percorso**. Se installi la stessa estensione su un secondo PC senza accorgimenti, l'ID cambia e Google restituisce `403 / bad client id` — anche copiando lo stesso identico `manifest.json`, perché l'ID non dipende dal contenuto del file ma dal percorso della cartella `dist` su quel PC.
 
 La soluzione pulita è aggiungere un campo `key` al manifest: così l'ID dell'estensione diventa **identico su tutti i PC** e un solo `client_id` OAuth funziona ovunque.
+
+> ✅ **Questo repo ha già un `key` impostato** in `public/manifest.example.json` (quindi presente anche nel tuo `public/manifest.json`, se l'hai copiato da lì dopo questo aggiornamento). L'ID risultante, uguale su qualsiasi PC/percorso, è:
+> ```
+> chbeigpambedgegommgifghachmpmmbf
+> ```
+> **Vai su [Google Cloud Console → Credenziali](https://console.cloud.google.com/apis/credentials)**, apri l'ID client OAuth "Estensione di Chrome" collegato al tuo `client_id`, e imposta (o verifica) l'**ID articolo** su questo valore. Una volta fatto, l'autenticazione funzionerà identica su ogni PC dove carichi questo repo, senza dover generare nulla.
+>
+> Se invece preferisci una chiave tua (es. per pubblicare la tua fork), segui i passi sotto per generarne una nuova — sostituirà quella di default.
 
 ### Come generare il `key`
 
